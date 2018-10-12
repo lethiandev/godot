@@ -450,6 +450,16 @@ void RasterizerCanvasGLES3::_draw_gui_primitive(int p_points, const Vector2 *p_v
 	storage->frame.canvas_draw_commands++;
 }
 
+static const GLenum gl_primitive[] = {
+	GL_POINTS,
+	GL_LINES,
+	GL_LINE_STRIP,
+	GL_LINE_LOOP,
+	GL_TRIANGLES,
+	GL_TRIANGLE_STRIP,
+	GL_TRIANGLE_FAN
+};
+
 void RasterizerCanvasGLES3::_canvas_item_render_commands(Item *p_item, Item *current_clip, bool &reclip) {
 
 	int cc = p_item->commands.size();
@@ -733,6 +743,43 @@ void RasterizerCanvasGLES3::_canvas_item_render_commands(Item *p_item, Item *cur
 					glDisable(GL_LINE_SMOOTH);
 				}
 #endif
+			} break;
+			case Item::Command::TYPE_MESH: {
+
+				Item::CommandMesh *mesh = static_cast<Item::CommandMesh *>(c);
+
+				_set_texture_rect_mode(false);
+
+				RasterizerStorageGLES3::Texture *texture = _bind_canvas_texture(mesh->texture, mesh->normal_map);
+
+				if (texture) {
+					Size2 texpixel_size(1.0 / texture->width, 1.0 / texture->height);
+					state.canvas_shader.set_uniform(CanvasShaderGLES3::COLOR_TEXPIXEL_SIZE, texpixel_size);
+				}
+
+				RasterizerStorageGLES3::Mesh *mesh_data = storage->mesh_owner.getptr(mesh->mesh);
+				ERR_CONTINUE(!mesh_data);
+
+				for (int i = 0, len = mesh_data->surfaces.size(); i < len; i++) {
+
+					RasterizerStorageGLES3::Surface *surface = mesh_data->surfaces[i];
+
+					glBindVertexArray(surface->array_id);
+
+					if (surface->index_array_len) {
+						const GLenum index_type = surface->index_array_len >= (1 << 16) ? GL_UNSIGNED_INT : GL_UNSIGNED_SHORT;
+
+						glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, surface->index_id);
+						glDrawElements(gl_primitive[surface->primitive], surface->index_array_len, index_type, 0);
+					}
+					else {
+						glDrawArrays(gl_primitive[surface->primitive], 0, surface->array_len);
+					}
+
+					storage->frame.canvas_draw_commands++;
+				}
+
+				glBindVertexArray(0);
 
 			} break;
 			case Item::Command::TYPE_PARTICLES: {

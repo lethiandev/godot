@@ -746,7 +746,7 @@ void VisualServerCanvas::canvas_item_add_set_transform(RID p_item, const Transfo
 	canvas_item->commands.push_back(tr);
 }
 
-void VisualServerCanvas::canvas_item_add_mesh(RID p_item, const RID &p_mesh, RID p_skeleton) {
+void VisualServerCanvas::canvas_item_add_mesh(RID p_item, const RID &p_mesh, RID p_texture, RID p_normal_map) {
 
 	Item *canvas_item = canvas_item_owner.getornull(p_item);
 	ERR_FAIL_COND(!canvas_item);
@@ -754,7 +754,8 @@ void VisualServerCanvas::canvas_item_add_mesh(RID p_item, const RID &p_mesh, RID
 	Item::CommandMesh *m = memnew(Item::CommandMesh);
 	ERR_FAIL_COND(!m);
 	m->mesh = p_mesh;
-	m->skeleton = p_skeleton;
+	m->texture = p_texture;
+	m->normal_map = p_normal_map;
 
 	canvas_item->commands.push_back(m);
 }

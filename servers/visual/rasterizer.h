@@ -749,7 +749,8 @@ public:
 		struct CommandMesh : public Command {
 
 			RID mesh;
-			RID skeleton;
+			RID texture;
+			RID normal_map;
 			CommandMesh() { type = TYPE_MESH; }
 		};
 
@@ -920,7 +921,7 @@ public:
 					case Item::Command::TYPE_MESH: {
 
 						const Item::CommandMesh *mesh = static_cast<const Item::CommandMesh *>(c);
-						AABB aabb = RasterizerStorage::base_singleton->mesh_get_aabb(mesh->mesh, mesh->skeleton);
+						AABB aabb = RasterizerStorage::base_singleton->mesh_get_aabb(mesh->mesh, RID());
 
 						r = Rect2(aabb.position.x, aabb.position.y, aabb.size.x, aabb.size.y);
 

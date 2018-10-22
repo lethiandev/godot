@@ -248,6 +248,7 @@ private:
 
 		bool key_event_accepted;
 		Control *mouse_focus;
+		Vector<Control*> touch_focus;
 		int mouse_focus_button;
 		Control *key_focus;
 		Control *mouse_over;

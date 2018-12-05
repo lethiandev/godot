@@ -334,6 +334,57 @@ void RasterizerCanvasGLES2::_draw_gui_primitive(int p_points, const Vector2 *p_v
 	glBindBuffer(GL_ARRAY_BUFFER, 0);
 }
 
+static const GLenum gl_primitive[] = {
+	GL_POINTS,
+	GL_LINES,
+	GL_LINE_STRIP,
+	GL_LINE_LOOP,
+	GL_TRIANGLES,
+	GL_TRIANGLE_STRIP,
+	GL_TRIANGLE_FAN
+};
+
+void RasterizerCanvasGLES2::_draw_mesh(const RasterizerStorageGLES2::Mesh *p_mesh) {
+
+	const int num_surfaces = p_mesh->surfaces.size();
+
+	for (int i = 0; i < num_surfaces; i++) {
+
+		const RasterizerStorageGLES2::Surface *s = p_mesh->surfaces[i];
+
+		glBindBuffer(GL_ARRAY_BUFFER, s->vertex_id);
+
+		if (s->index_array_len > 0) {
+			glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, s->index_id);
+		}
+
+		for (int i = 0; i < VS::ARRAY_MAX - 1; i++) {
+			if (s->attribs[i].enabled) {
+				glEnableVertexAttribArray(i);
+				glVertexAttribPointer(s->attribs[i].index, s->attribs[i].size, s->attribs[i].type, s->attribs[i].normalized, s->attribs[i].stride, (uint8_t *)0 + s->attribs[i].offset);
+			} else {
+				glDisableVertexAttribArray(i);
+				switch (i) {
+					case VS::ARRAY_NORMAL: {
+						glVertexAttrib4f(VS::ARRAY_NORMAL, 0.0, 0.0, 1, 1);
+					} break;
+					case VS::ARRAY_COLOR: {
+						glVertexAttrib4f(VS::ARRAY_COLOR, 1, 1, 1, 1);
+
+					} break;
+					default: {}
+				}
+			}
+		}
+
+		if (s->index_array_len > 0) {
+			glDrawElements(gl_primitive[s->primitive], s->index_array_len, (s->array_len >= (1 << 16)) ? GL_UNSIGNED_INT : GL_UNSIGNED_SHORT, 0);
+		} else {
+			glDrawArrays(gl_primitive[s->primitive], 0, s->array_len);
+		}
+	}
+}
+
 void RasterizerCanvasGLES2::_canvas_item_render_commands(Item *p_item, Item *current_clip, bool &reclip, RasterizerStorageGLES2::Material *p_material) {
 
 	int command_count = p_item->commands.size();
@@ -720,6 +771,32 @@ void RasterizerCanvasGLES2::_canvas_item_render_commands(Item *p_item, Item *cur
 						_draw_generic(GL_LINES, pline->lines.size(), pline->lines.ptr(), NULL, pline->line_colors.ptr(), pline->line_colors.size() == 1);
 					}
 				}
+			} break;
+
+			case Item::Command::TYPE_MESH: {
+
+				Item::CommandMesh *mesh_cmd = static_cast<Item::CommandMesh*>(command);
+
+				RasterizerStorageGLES2::Mesh *mesh = storage->mesh_owner.getornull(mesh_cmd->mesh);
+				ERR_CONTINUE(!mesh);
+
+				state.canvas_shader.set_conditional(CanvasShaderGLES2::USE_TEXTURE_RECT, false);
+				state.canvas_shader.set_conditional(CanvasShaderGLES2::USE_UV_ATTRIBUTE, true);
+
+				if (state.canvas_shader.bind()) {
+					_set_uniforms();
+					state.canvas_shader.use_material((void *)p_material);
+				}
+
+				RasterizerStorageGLES2::Texture *texture = _bind_canvas_texture(mesh_cmd->texture, mesh_cmd->normal_map);
+
+				if (texture) {
+					Size2 texpixel_size(1.0 / texture->width, 1.0 / texture->height);
+					state.canvas_shader.set_uniform(CanvasShaderGLES2::COLOR_TEXPIXEL_SIZE, texpixel_size);
+				}
+
+				_draw_mesh(mesh);
+
 			} break;
 
 			case Item::Command::TYPE_PRIMITIVE: {

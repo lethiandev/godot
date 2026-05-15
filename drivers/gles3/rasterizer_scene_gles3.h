@@ -145,6 +145,9 @@ struct RenderDataGLES3 {
 	/* Shadow data */
 	const RendererSceneRender::RenderShadowData *render_shadows = nullptr;
 	int render_shadow_count = 0;
+
+	RSE::TransparencySortMode transparency_sort_mode;
+	Vector3 transparency_sort_axis = Vector3(0, 0, 1);
 };
 
 class RasterizerCanvasGLES3;

@@ -153,8 +153,28 @@ void RendererSceneCull::camera_set_use_vertical_aspect(RID p_camera, bool p_enab
 	camera->vaspect = p_enable;
 }
 
+void RendererSceneCull::camera_set_transparency_sort_mode(RID p_camera, RSE::TransparencySortMode p_mode) {
+	Camera *camera = camera_owner.get_or_null(p_camera);
+	ERR_FAIL_NULL(camera);
+	camera->transparency_sort_mode = p_mode;
+}
+
+void RendererSceneCull::camera_set_transparency_sort_axis(RID p_camera, const Vector3 &p_axis) {
+	Camera *camera = camera_owner.get_or_null(p_camera);
+	ERR_FAIL_NULL(camera);
+	camera->transparency_sort_axis = p_axis.normalized();
+}
+
 bool RendererSceneCull::is_camera(RID p_camera) const {
 	return camera_owner.owns(p_camera);
+}
+
+void RendererSceneCull::set_default_transparency_sort_mode(RSE::TransparencySortMode p_mode) {
+	default_transparency_sort_mode = p_mode == RSE::TRANSPARENCY_SORT_DEFAULT ? RSE::TRANSPARENCY_SORT_DEPTH : p_mode;
+}
+
+void RendererSceneCull::set_default_transparency_sort_axis(const Vector3 &p_axis) {
+	default_transparency_sort_axis = p_axis.normalized();
 }
 
 /* OCCLUDER API */
@@ -2691,6 +2711,13 @@ void RendererSceneCull::render_camera(const Ref<RenderSceneBuffers> &p_render_bu
 		taa_frame_count = float(RSG::rasterizer->get_frame_number() % p_jitter_phase_count);
 	}
 
+	RSE::TransparencySortMode transparency_sort_mode = camera->transparency_sort_mode;
+	Vector3 transparency_sort_axis = camera->transparency_sort_axis;
+	if (camera->transparency_sort_mode == RSE::TRANSPARENCY_SORT_DEFAULT) {
+		transparency_sort_mode = default_transparency_sort_mode;
+		transparency_sort_axis = default_transparency_sort_axis;
+	}
+
 	RendererSceneRender::CameraData camera_data;
 
 	// Setup Camera(s)
@@ -2731,7 +2758,7 @@ void RendererSceneCull::render_camera(const Ref<RenderSceneBuffers> &p_render_bu
 			} break;
 		}
 
-		camera_data.set_camera(transform, projection, is_orthogonal, vaspect, jitter, taa_frame_count, camera->visible_layers);
+		camera_data.set_camera(transform, projection, is_orthogonal, vaspect, jitter, taa_frame_count, camera->visible_layers, transparency_sort_mode, transparency_sort_axis);
 #ifndef XR_DISABLED
 	} else {
 		XRServer *xr_server = XRServer::get_singleton();
@@ -2764,7 +2791,7 @@ void RendererSceneCull::render_camera(const Ref<RenderSceneBuffers> &p_render_bu
 		}
 
 		if (view_count == 1) {
-			camera_data.set_camera(transforms[0], projections[0], false, camera->vaspect, jitter, p_jitter_phase_count, camera->visible_layers);
+			camera_data.set_camera(transforms[0], projections[0], false, camera->vaspect, jitter, p_jitter_phase_count, camera->visible_layers, transparency_sort_mode, transparency_sort_axis);
 		} else if (view_count == 2) {
 			camera_data.set_multiview_camera(view_count, transforms, projections, false, camera->vaspect, camera->visible_layers);
 		} else {
@@ -4524,6 +4551,9 @@ RendererSceneCull::RendererSceneCull() {
 	bool tighter_caster_culling = GLOBAL_DEF("rendering/lights_and_shadows/tighter_shadow_caster_culling", true);
 	light_culler->set_caster_culling_active(tighter_caster_culling);
 	light_culler->set_light_culling_active(tighter_caster_culling);
+
+	default_transparency_sort_mode = GLOBAL_GET("rendering/camera/transparency_sort/default_transparency_sort_mode");
+	default_transparency_sort_axis = GLOBAL_GET("rendering/camera/transparency_sort/default_transparency_sort_axis");
 }
 
 RendererSceneCull::~RendererSceneCull() {

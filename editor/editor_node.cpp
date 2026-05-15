@@ -495,6 +495,10 @@ void EditorNode::_update_from_settings() {
 		scene_root->propagate_notification(Control::NOTIFICATION_LAYOUT_DIRECTION_CHANGED);
 	}
 
+	Vector3 default_transparency_sort_axis = GLOBAL_GET("rendering/camera/transparency_sort/default_transparency_sort_axis");
+	RS::get_singleton()->set_default_transparency_sort_axis(default_transparency_sort_axis);
+	RSE::TransparencySortMode default_transparency_sort_mode = RSE::TransparencySortMode(int(GLOBAL_GET("rendering/camera/transparency_sort/default_transparency_sort_mode")));
+	RS::get_singleton()->set_default_transparency_sort_mode(default_transparency_sort_mode);
 	RSE::DOFBokehShape dof_shape = RSE::DOFBokehShape(int(GLOBAL_GET("rendering/camera/depth_of_field/depth_of_field_bokeh_shape")));
 	RS::get_singleton()->camera_attributes_set_dof_blur_bokeh_shape(dof_shape);
 	RSE::DOFBlurQuality dof_quality = RSE::DOFBlurQuality(int(GLOBAL_GET("rendering/camera/depth_of_field/depth_of_field_bokeh_quality")));

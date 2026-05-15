@@ -531,6 +531,11 @@ public:
 	virtual void camera_set_compositor(RID p_camera, RID p_compositor) = 0;
 	virtual void camera_set_use_vertical_aspect(RID p_camera, bool p_enable) = 0;
 
+	virtual void set_default_transparency_sort_mode(RSE::TransparencySortMode p_mode) = 0;
+	virtual void set_default_transparency_sort_axis(const Vector3 &p_axis) = 0;
+	virtual void camera_set_transparency_sort_mode(RID p_camera, RSE::TransparencySortMode p_mode) = 0;
+	virtual void camera_set_transparency_sort_axis(RID p_camera, const Vector3 &p_axis) = 0;
+
 	/* VIEWPORT API */
 
 	virtual RID viewport_create() = 0;
@@ -1114,6 +1119,7 @@ VARIANT_ENUM_CAST_EXT(RSE::ParticlesEmitFlags, RenderingServer::ParticlesEmitFla
 VARIANT_ENUM_CAST_EXT(RSE::ParticlesCollisionType, RenderingServer::ParticlesCollisionType);
 VARIANT_ENUM_CAST_EXT(RSE::ParticlesCollisionHeightfieldResolution, RenderingServer::ParticlesCollisionHeightfieldResolution);
 VARIANT_ENUM_CAST_EXT(RSE::FogVolumeShape, RenderingServer::FogVolumeShape);
+VARIANT_ENUM_CAST_EXT(RSE::TransparencySortMode, RenderingServer::TransparencySortMode);
 VARIANT_ENUM_CAST_EXT(RSE::ViewportScaling3DMode, RenderingServer::ViewportScaling3DMode);
 VARIANT_ENUM_CAST_EXT(RSE::ViewportUpdateMode, RenderingServer::ViewportUpdateMode);
 VARIANT_ENUM_CAST_EXT(RSE::ViewportClearMode, RenderingServer::ViewportClearMode);

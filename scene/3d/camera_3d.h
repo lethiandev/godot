@@ -36,6 +36,7 @@
 #include "scene/resources/camera_attributes.h"
 #include "scene/resources/compositor.h"
 #include "scene/resources/environment.h"
+#include "servers/rendering/rendering_server_enums.h"
 
 class Camera3D : public Node3D {
 	GDCLASS(Camera3D, Node3D);
@@ -74,6 +75,8 @@ private:
 	real_t v_offset = 0.0;
 	real_t h_offset = 0.0;
 	KeepAspect keep_aspect = KEEP_HEIGHT;
+	RSE::TransparencySortMode transparency_sort_mode = RSE::TRANSPARENCY_SORT_DEFAULT;
+	Vector3 transparency_sort_axis = Vector3(0, 0, 1);
 
 	RID camera;
 	RID scenario_id;
@@ -205,6 +208,12 @@ public:
 	DopplerTracking get_doppler_tracking() const;
 
 	Vector3 get_doppler_tracked_velocity() const;
+
+	void set_transparency_sort_mode(RSE::TransparencySortMode p_mode);
+	RSE::TransparencySortMode get_transparency_sort_mode() const;
+
+	void set_transparency_sort_axis(const Vector3 &p_axis);
+	Vector3 get_transparency_sort_axis() const;
 
 #ifndef PHYSICS_3D_DISABLED
 	RID get_pyramid_shape_rid();
